@@ -155,13 +155,6 @@ if (system.args.length === 1) {
                 phantom.exit();
             }, 0);
 
-//            postBody = '_method=put&data=' + encodeURIComponent(harPost);
-//            page.open(system.args[2], 'POST', postBody, function(status) {
-//                console.log('Status: ' + status);
-//                setTimeout(function(){
-//                    phantom.exit();
-//                }, 0);
-//            });
         }
     });
 }
