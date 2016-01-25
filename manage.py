@@ -8,6 +8,11 @@ HARDYHAR = os.path.join(APP_ROOT, 'scripts/har.js')
 PHANTOMJS = os.path.join(APP_ROOT, 'node_modules/phantomjs/bin/phantomjs')
 
 class BaseHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.set_header("Content-Type", "application/json");
+        self.set_status(404)
+        self.write(json.dumps({'success': 'false', 'message': 'Nothing to GET. Only POST supported'}));
+
     def validateArgs(self, required):
         result = { 'success': True, 'missing_args': [] };
         for req in required:
@@ -16,6 +21,12 @@ class BaseHandler(tornado.web.RequestHandler):
                 result['missing_args'].append(req);
                 result['message'] = "Missing arguments: " + " ,".join(result['missing_args']);
         return result;
+
+    def handleResult(self, result):
+        if result['success'] == False:
+            self.returnFailure(json.dumps(result));
+        else:
+            self.returnSuccess(result['data']);
 
     def returnSuccess(self, body):
         self.set_header("Content-Type", "application/json");
@@ -37,26 +48,22 @@ class RootHandler(BaseHandler):
         self.returnSuccess("Hello, world")
 
 class YSlowHandler(BaseHandler):
-    def get(self):
+    def post(self):
         validation = self.validateArgs(['url']);
         if validation['success'] == False:
             self.returnFailure(json.dumps(validation));
         else:
             result = yslow(self.get_query_argument('url'), ('--info grade'));
-            if result['success'] == False:
-                self.returnFailure(json.dumps(result));
-            else:
-                self.returnSuccess(result['data']);
+            self.handleResult(result);
 
 class HarHandler(BaseHandler):
-    def get(self):
+    def post(self):
         validation = self.validateArgs(['url']);
         if validation['success'] == False:
             self.returnFailure(json.dumps(validation));
         else:
             result = hardyhar(self.get_query_argument('url'));
-            self.set_header("Content-Type", "application/json");
-            self.write(result);
+            self.handleResult(result);
 
 def yslow(url, *args):
     command = [PHANTOMJS, YSLOW];
